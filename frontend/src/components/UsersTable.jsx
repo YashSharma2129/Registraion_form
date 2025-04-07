@@ -35,13 +35,17 @@ const UsersTable = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
+      setIsLoading(true);
       try {
         await axios.delete(`http://localhost:3001/users/${id}`);
         alert("User deleted successfully!");
-        fetchUsers();
+        await fetchUsers(); // Wait for users to be refreshed
       } catch (error) {
-        console.error("Failed to delete user:", error);
-        alert("An error occurred while deleting the user.");
+        const errorMsg = error.response?.data?.error || "Failed to delete user";
+        setError(errorMsg);
+        console.error("Delete error:", error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -92,31 +96,25 @@ const UsersTable = () => {
   };
 
   const handleCreate = async () => {
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.gender ||
-      !formData.dob ||
-      !formData.address
-    ) {
-      alert("Please fill out all fields!");
+    if (!formData.name || !formData.email || !formData.gender || !formData.dob || !formData.address) {
+      setError("Please fill out all fields!");
       return;
     }
 
-    console.log("Creating user with data:", formData); // Check data before sending
-
+    setIsLoading(true);
     try {
-      const response = await axios.post(
-        "http://localhost:3001/users",
-        formData
-      );
-      console.log("Response from server:", response);
+      const response = await axios.post("http://localhost:3001/users", formData);
+      console.log("User created:", response.data);
       alert("User created successfully!");
-      fetchUsers(); // Refresh the user list
-      setShowCreateForm(false); // Hide the form
+      await fetchUsers(); 
+      setShowCreateForm(false);
+      setError(null);
     } catch (error) {
-      console.error("Error creating user:", error.response || error); // Log full error
-      alert("An error occurred while creating the user.");
+      const errorMsg = error.response?.data?.error || "Failed to create user";
+      setError(errorMsg);
+      console.error("Create error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 

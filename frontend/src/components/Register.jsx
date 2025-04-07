@@ -1,8 +1,7 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -12,28 +11,58 @@ const Register = () => {
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
   const [pincode, setPincode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  const validateForm = () => {
+    if (
+      !name ||
+      !email ||
+      !password ||
+      !address ||
+      !dob ||
+      !gender ||
+      !pincode
+    ) {
+      setError("All fields are required");
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Invalid email format");
+      return false;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return false;
+    }
+    return true;
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setError("");
 
-    const formData = {
-      name,
-      email,
-      password,
-      address,
-      dob,
-      gender,
-      pincode,
-    };
+    if (!validateForm()) return;
 
+    setLoading(true);
     try {
-      await axios.post("http://127.0.0.1:3001/register", formData);
-      alert("User registered successfully!");
+      await axios.post("http://127.0.0.1:3001/register", {
+        name,
+        email,
+        password,
+        address,
+        dob,
+        gender,
+        pincode,
+      });
+      alert("Registration successful!");
       navigate("/login");
     } catch (error) {
+      setError(error.response?.data?.error || "Registration failed");
       console.error(error);
-      alert("Registration failed.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -174,17 +203,18 @@ const Register = () => {
               <option value="Other">Other</option>
             </select>
           </div>
-
+          {error && <div className="alert alert-danger">{error}</div>}
           <button
             type="submit"
             className="btn btn-primary w-100 py-2"
+            disabled={loading}
             style={{
               backgroundColor: "#2575fc",
               border: "none",
               borderRadius: "20px",
             }}
           >
-            Register
+            {loading ? "Registering..." : "Register"}
           </button>
         </form>
         <p className="mt-2 text-center text-muted">

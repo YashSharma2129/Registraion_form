@@ -110,20 +110,44 @@ app.post("/login", async (req, res) => {
   }
 });
 
+const validateFields = (fields) => {
+  for (let key in fields) {
+    if (!fields[key] || fields[key].toString().trim() === '') {
+      throw new Error(`${key} is required`);
+    }
+  }
+};
+
 app.post("/users", async (req, res) => {
   try {
     const { name, email, gender, dob, address, pincode } = req.body;
+    validateFields({ name, email, gender, dob, address, pincode });
 
-    if (!name || !email || !gender || !dob || !address || !pincode) {
-      return res.status(400).json({ message: "All fields are required" });
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ error: "Invalid email format" });
     }
 
-    const newUser = new FormDataModel({ name, email, gender, dob, address, pincode });
-    await newUser.save();
-    res.status(201).json(newUser);
+    const newUser = new FormDataModel({ 
+      name, 
+      email, 
+      gender, 
+      dob, 
+      address, 
+      pincode 
+    });
+
+    const savedUser = await newUser.save();
+    res.status(201).json({
+      message: "User created successfully",
+      user: savedUser
+    });
   } catch (error) {
-    console.error("Error while creating user:", error);
-    res.status(500).json({ message: "Error creating user" });
+    console.error("Error creating user:", error);
+    res.status(500).json({ 
+      error: error.message || "Error creating user" 
+    });
   }
 });
 
@@ -173,6 +197,12 @@ app.delete("/users/:id", async (req, res) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Something broke!" });
+});
+
+// Add request logging middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
 });
 
 app.listen(3001, () => {
