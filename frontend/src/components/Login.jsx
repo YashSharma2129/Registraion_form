@@ -7,13 +7,15 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = (event) => {
     event.preventDefault();
+    setErrorMessage("");
 
     if (!email || !password) {
-      alert("Please fill out all fields.");
+      setErrorMessage("Please fill out all fields.");
       return;
     }
 
@@ -22,24 +24,18 @@ const Login = () => {
     axios
       .post("http://localhost:3001/login", { email, password })
       .then((result) => {
-        setLoading(false);
         console.log(result);
         if (result.data.message === "Login successful") {
-          console.log("Login Success");
-          alert("Login successful!");
           navigate("/users");
-        } else if (result.data.error === "Invalid password") {
-          alert("Incorrect password! Please try again.");
-        } else if (result.data.error === "No user found with this email") {
-          alert("No user found with this email.");
         } else {
-          alert("An unexpected error occurred. Please try again later.");
+          setErrorMessage(result.data.error || "Login failed");
         }
       })
       .catch((err) => {
+        setErrorMessage(err.response?.data?.error || "Server error occurred");
+      })
+      .finally(() => {
         setLoading(false);
-        console.error("Error:", err);
-        alert("Server error. Please try again later.");
       });
   };
 
@@ -94,6 +90,20 @@ const Login = () => {
               {loading ? "Logging In..." : "Login"}
             </button>
           </form>
+          <div className="mb-3">
+            {errorMessage && (
+              <div className="alert alert-danger" role="alert">
+                {errorMessage}
+              </div>
+            )}
+            {loading && (
+              <div className="text-center">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            )}
+          </div>
           <p className="container my-2">
             Don&apos;t have an account?{" "}
             <Link to="/register" className="text-decoration-none">

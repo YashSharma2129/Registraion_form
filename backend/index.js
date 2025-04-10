@@ -29,9 +29,30 @@ app.get("/users", async (req, res) => {
   }
 });
 
-app.post("/register", async (req, res) => {
+// Add input validation middleware
+const validateUser = (req, res, next) => {
+  const { email, password, name, gender, dob, address, pincode } = req.body;
+
+  if (!email?.trim() || !password?.trim() || !name?.trim()) {
+    return res.status(400).json({ error: "Required fields cannot be empty" });
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: "Invalid email format" });
+  }
+
+  if (password.length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters" });
+  }
+
+  next();
+};
+
+// Update registration route with validation
+app.post("/register", validateUser, async (req, res) => {
   try {
-    const { email, password, name, gender, dob, address ,pincode } = req.body;
+    const { email, password, name, gender, dob, address, pincode } = req.body;
 
     if (!email || !password || !name || !gender || !dob || !address || !pincode) {
       return res.status(400).json({
@@ -59,8 +80,8 @@ app.post("/register", async (req, res) => {
 
     res.status(201).json({ message: "Registration successful", user: newUser });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("Registration error:", err);
+    res.status(500).json({ error: "Registration failed: " + err.message });
   }
 });
 
@@ -92,7 +113,7 @@ app.post("/login", async (req, res) => {
 app.post("/users", async (req, res) => {
   try {
     const { name, email, gender, dob, address, pincode } = req.body;
-    
+
     if (!name || !email || !gender || !dob || !address || !pincode) {
       return res.status(400).json({ message: "All fields are required" });
     }
@@ -106,11 +127,9 @@ app.post("/users", async (req, res) => {
   }
 });
 
-
-
 app.put("/users/:id", async (req, res) => {
   const { id } = req.params;
-  const { name, email, gender, dob, address,pincode } = req.body;
+  const { name, email, gender, dob, address, pincode } = req.body;
 
   try {
     const updatedUser = await FormDataModel.findByIdAndUpdate(id, {
@@ -133,7 +152,6 @@ app.put("/users/:id", async (req, res) => {
   }
 });
 
-
 app.delete("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -149,6 +167,12 @@ app.delete("/users/:id", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Failed to delete user" });
   }
+});
+
+// Add error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: "Something broke!" });
 });
 
 app.listen(3001, () => {
