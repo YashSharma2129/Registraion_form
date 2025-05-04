@@ -91,13 +91,13 @@ app.post("/login", async (req, res) => {
 
 app.post("/users", async (req, res) => {
   try {
-    const { name, email, gender, dob, address,pincode } = req.body;
+    const { name, email, gender, dob, address, pincode } = req.body;
     
     if (!name || !email || !gender || !dob || !address || !pincode) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const newUser = new User({ name, email, gender, dob, address,pincode });
+    const newUser = new FormDataModel({ name, email, gender, dob, address, pincode });
     await newUser.save();
     res.status(201).json(newUser);
   } catch (error) {

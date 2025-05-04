@@ -1,8 +1,10 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const UsersTable = () => {
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -65,7 +67,6 @@ const UsersTable = () => {
       alert("User updated successfully!");
       setEditingUser(null);
       fetchUsers();
-      navigate(user);
     } catch (error) {
       console.error("Failed to update user:", error);
       alert("An error occurred while updating the user.");
